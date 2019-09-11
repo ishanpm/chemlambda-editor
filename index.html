@@ -1,61 +1,45 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>Chemlambda editor prototype</title>
-    <style>
-        span {
-            color: white; 
-        }
-        .link {
-            stroke: white;
-            stroke-width: 2px;
-        }
-
-        .node {
-        }
-        .textClass {
-            stroke: #323232;
-            fill: white;
-            font-family: "Lucida Grande", "Droid Sans", Arial, Helvetica, sans-serif;
-            font-weight: normal;
-            stroke-width: .5;
-            font-size: 14px;
-        }
-        body {
-            background-color: black;
-        }
-        #svgdiv .svg {
-          border: 2px solid #888
-        }
-    </style>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.7/d3.min.js"></script>
-    <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+  <title>Chemlambda editor prototype</title>
+  <link rel="stylesheet" type="text/css" href="styles.css"/>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/5.9.7/d3.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
 </head>
 <body>
-<span>Edit:</span>
-<button onclick="setMode('transform')">Transform</button>
-<button onclick="setMode('link')">Link</button>
-<button onclick="setMode('delete')">Delete</button>
-<span>Add:</span>
-<button onclick="setMode('add','L')">L</button>
-<button onclick="setMode('add','A')">A</button>
-<button onclick="setMode('add','FI')">FI</button>
-<button onclick="setMode('add','FO')">FO</button>
-<button onclick="setMode('add','FOE')">FOE</button>
-<button onclick="setMode('add','T')">T</button>
-<span>Run:</span>
-<button onclick="setSpeed(1)">Slow</button>
-<button onclick="setSpeed(10)">Fast</button>
-<button onclick="setSpeed(0)">Pause</button>
-<span>Option:</span>
-<button onclick="transformList=transformListOrig">Use original moveset</button>
-<button onclick="transformList=transformListAlt">Use alternate moveset</button>
-<div id="svgdiv"></div>
-<textarea id="molFileArea"></textarea>
-<div>
-  <button onclick="doImport(molFileArea)">Import .mol</button>
-  <button onclick="doClearImport(molFileArea)">Clear and import .mol</button>
-  <button onclick="doExport(molFileArea)">Export .mol</button>
+
+<div class="player-frame">
+  
+  <div class="toolbar toolbar-top">
+    <span>Edit:</span>
+    <button onclick="setMode('transform')">Transform</button>
+    <button onclick="setMode('link')">Link</button>
+    <button onclick="setMode('delete')">Delete</button>
+    <span>Add:</span>
+    <button onclick="setMode('add','L')">L</button>
+    <button onclick="setMode('add','A')">A</button>
+    <button onclick="setMode('add','FI')">FI</button>
+    <button onclick="setMode('add','FO')">FO</button>
+    <button onclick="setMode('add','FOE')">FOE</button>
+    <button onclick="setMode('add','T')">T</button>
+    <span>Run:</span>
+    <button onclick="setSpeed(1)">Slow</button>
+    <button onclick="setSpeed(10)">Fast</button>
+    <button onclick="setSpeed(0)">Pause</button>
+    <span>Option:</span>
+    <button onclick="transformList=transformListOrig">Use original moveset</button>
+    <button onclick="transformList=transformListAlt">Use alternate moveset</button>
+  </div>
+  
+  <div id="svgdiv"></div>
+  
+  <div class="toolbar toolbar-bottom">
+    <div> <textarea id="molFileArea"></textarea></div>
+    <button onclick="doImport(molFileArea)">Import .mol</button>
+    <button onclick="doClearImport(molFileArea)">Clear and import .mol</button>
+    <button onclick="doExport(molFileArea)">Export .mol</button>
+  </div>
+
 </div>
 
 <script src="chemlambda.js"></script>
