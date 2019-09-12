@@ -20,36 +20,61 @@ var nodeValence = {
   'Arrow':[0,1],
 }
 
+/**
+ * NEW TRANSFORM SYNTAX
+ * 
+ * {in:[[type, edge...]...], add:[[type, base, edge...]...], remove:([index...]|true), link:[[edge1,edge2]...]}
+ * 
+ * Half-edges are a positive or negative number. For example, 1 connects to -1.
+ * Negative is input and positive is output, but this is arbitrary and not enforced.
+ * `in` is a list of nodes and their edges.
+ * The order of `in` is mostly arbitrary, but the first node is used as the target when mousing over nodes.
+ * `add` contains the type of node to add, the index of the node to appear on top of, and a list of half-edges to connect to.
+ * `remove` is a list of indices of nodes in `in` to be deleted. If `remove` is true instead of a list, remove all input nodes.
+ * `link` is a list of pre-existing edge pairs that need to be changed. For example, [[2,-3],[3,-2]] will cross links 2 and 3.
+ * 
+ * Note that transformations are local. All of the nodes in `in` must form a connected group.
+ * 
+ */
+
 var transformListOrig = [
-  {left:"L",right:"A",action:"remove"},
-  {left:"FI",right:"FOE",action:"remove"},
-  {left:"L",right:"FO",action:"dist2",t1:"FOE",t2:"FI",t3:"L",t4:"L"},
-  {left:"A",right:"FO",action:"dist1",t1:"FOE",t2:"FOE",t3:"A",t4:"A"}, // 3
-  {left:"L",right:"FOE",action:"dist2",t1:"FOE",t2:"FI",t3:"L",t4:"L"},
-  {left:"A",right:"FOE",action:"dist1",t1:"FOE",t2:"FOE",t3:"A",t4:"A"},
-  {left:"FI",right:"FO",action:"dist1",t1:"FO",t2:"FO",t3:"FI",t4:"FI"},
-  {left:"FO",right:"FOE",action:"dist2",t1:"FOE",t2:"FI",t3:"FO",t4:"FO"}, // 4
-  {left:"L",right:"T",action:"termsplit"},
-  {left:"A",right:"T",action:"term"},
-  {left:"FI",right:"T",action:"term"},
-  {left:"FO",right:"T",action:"term1"},
-  {left:"FOE",right:"T",action:"term1"}, // 12
-  {left:"null",right:"T",action:"remove1"},
-  {left:"null",right:"T",action:"remove1"},
-  {left:"any",right:"Arrow",action:"arrow"},
+  {name:'L-A',   in:[['A',-3,-4,5],['L',-1,2,3]],remove:true,link:[[1,-5],[-2,4]]},
+  {name:'FI-FOE',in:[['FOE',-3,4,5],['FI',-1,-2,3]],remove:true,link:[[1,-5],[2,-4]]},
+  {name:'L-FO',  in:[['FO',-3,4,5],['L',-1,2,3]],add:[['FOE',1,-1,7,6],['FI',1,-8,-9,2],['L',0,-7,9,4],['L',0,-6,8,5]],remove:true},
+  {name:'A-FO',  in:[['FO',-3,4,5],['A',-1,-2,3]],add:[['FOE',1,-1,7,6],['FOE',1,-2,9,8],['A',0,-7,-9,4],['A',0,-6,-8,5]],remove:true},
+  {name:'L-FOE', in:[['FOE',-3,4,5],['L',-1,2,3]],add:[['FOE',1,-1,7,6],['FI',1,-8,-9,2],['L',0,-7,9,4],['L',0,-6,8,5]],remove:true},
+  {name:'A-FOE', in:[['FOE',-3,4,5],['A',-1,-2,3]],add:[['FOE',1,-1,7,6],['FOE',1,-2,9,8],['A',0,-7,-9,4],['A',0,-6,-8,5]],remove:true},
+  {name:'FI-FO', in:[['FO',-3,4,5],['FI',-1,-2,3]],add:[['FO',1,-1,7,6],['FO',1,-2,9,8],['FI',0,-7,-9,4],['FI',0,-6,-8,5]],remove:true},
+  {name:'FO-FOE',in:[['FOE',-3,4,5],['FO',-1,2,3]],add:[['FOE',1,-1,7,6],['FI',1,-8,-9,2],['FO',0,-7,9,4],['FO',0,-6,8,5]],remove:true},
+  {name:'L-T',   in:[['T',-3],['L',-1,2,3]],remove:[1],link:[[1,-3]]},
+  {name:'A-T',   in:[['T',-3],['A',-1,-2,3]],add:[['T',1,-2]],remove:[1],link:[[1,-3]]},
+  {name:'FI-T',  in:[['T',-3],['FI',-1,-2,3]],add:[['T',1,-2]],remove:[1],link:[[1,-3]]},
+  {name:'FO1-T', in:[['T',-3],['FO',-1,2,3]],remove:true,link:[[1,-2]]},
+  {name:'FO2-T', in:[['T',-2],['FO',-1,2,3]],remove:true,link:[[1,-3]]},
+  {name:'FOE1-T',in:[['T',-3],['FOE',-1,2,3]],remove:true,link:[[1,-2]]},
+  {name:'FOE2-T',in:[['T',-2],['FOE',-1,2,3]],remove:true,link:[[1,-3]]},
+  {name:'Clean', in:[['T',-1],[null,1]],remove:true},
+  {name:'Comb',  in:[['Arrow',-1,2]],remove:true,link:[1,-2]}
 ]
 
-var transformListAlt = JSON.parse(JSON.stringify(transformListOrig));
-// {left:"A",right:"FO",action:"dist1",t1:"FO",t2:"FO",t3:"A",t4:"A"},
-// A-FO generates FO instead of FOE
-transformListAlt[3].t1 = "FO";
-transformListAlt[3].t2 = "FO";
-// {left:"FO",right:"FOE",action:"dist3",t1:"FOE",t2:"FI",t3:"FO",t4:"FO"},
-// FO-FOE requires FO to connect to two FOE
-transformListAlt[7].action = "dist3";
-// {left:"FOE",right:"T",action:"term2"},
-// FOE-T requires FOE to connect to two T
-transformListAlt[12].action = "term2";
+var transformListAlt = [
+  {name:'L-A',   in:[['A',-3,-4,5],['L',-1,2,3]],remove:true,link:[[1,-5],[-2,4]]},
+  {name:'FI-FOE',in:[['FOE',-3,4,5],['FI',-1,-2,3]],remove:true,link:[[1,-5],[2,-4]]},
+  {name:'L-FO',  in:[['FO',-3,4,5],['L',-1,2,3]],add:[['FOE',1,-1,7,6],['FI',1,-8,-9,2],['L',0,-7,9,4],['L',0,-6,8,5]],remove:true},
+  {name:'A-FO',  in:[['FO',-3,4,5],['A',-1,-2,3]],add:[['FO',1,-1,7,6],['FO',1,-2,9,8],['A',0,-7,-9,4],['A',0,-6,-8,5]],remove:true}, // A-FO generates FO instead of FOE
+  {name:'L-FOE', in:[['FOE',-3,4,5],['L',-1,2,3]],add:[['FOE',1,-1,7,6],['FI',1,-8,-9,2],['L',0,-7,9,4],['L',0,-6,8,5]],remove:true},
+  {name:'A-FOE', in:[['FOE',-3,4,5],['A',-1,-2,3]],add:[['FOE',1,-1,7,6],['FOE',1,-2,9,8],['A',0,-7,-9,4],['A',0,-6,-8,5]],remove:true},
+  {name:'FI-FO', in:[['FO',-3,4,5],['FI',-1,-2,3]],add:[['FO',1,-1,7,6],['FO',1,-2,9,8],['FI',0,-7,-9,4],['FI',0,-6,-8,5]],remove:true},
+  {name:'FO-FOE',in:[['FOE',-3,4,5],['FO',-1,2,3]],add:[['FOE',1,-1,7,6],['FI',1,-8,-9,2],['FO',0,-7,9,4],['FO',0,-6,8,5]],remove:true},
+  {name:'L-T',   in:[['T',-3],['L',-1,2,3]],remove:[1],link:[[1,-3]]},
+  {name:'A-T',   in:[['T',-3],['A',-1,-2,3]],add:[['T',1,-2]],remove:[1],link:[[1,-3]]},
+  {name:'FI-T',  in:[['T',-3],['FI',-1,-2,3]],add:[['T',1,-2]],remove:[1],link:[[1,-3]]},
+  {name:'FO1-T', in:[['T',-3],['FO',-1,2,3]],remove:true,link:[[1,-2]]},
+  {name:'FO2-T', in:[['T',-2],['FO',-1,2,3]],remove:true,link:[[1,-3]]},
+  {name:'FOE-T', in:[['T',-3],['FOE',-1,2,3],['T',-2]],remove:[1,2],link:[[1,-3]]}, // FOE-T requires connecting to two T
+  {name:'Clean', in:[['T',-1],[null,1]],remove:true},
+  {name:'Comb',  in:[['Arrow',-1,2]],remove:true,link:[1,-2]}
+] 
 
 transformList = transformListOrig;
 
@@ -369,173 +394,178 @@ function isCenter(node) {
 
 function findTransform(n1) {
   if (!isCenter(n1)) return;
-
-  var e1 = findLinkedOfType(n1,"left");
-  var e2 = findLinkedHalfEdge(e1);
-  var n2 = null;
-  var n2type = null;
   
-  if (e2 == null) {
-    n2type = "null";
-  } else {
-    n2 = findLinkedCenter(e2);
-    n2type = n2.type;
-  }
-
   for (var i=0; i<transformList.length; i++) {
-    var trans = transformList[i];
-    if (trans.left == n2type && trans.right == n1.type) {
-      if (trans.action == "term1") {
-        if (e2.type == "out" || e2.type == "right") return trans;
-      } else if (trans.action == "term2" || trans.action == "dist3") {
-        var e3 = findLinkedOfType(n2,"out");
-        var e4 = findLinkedOfType(e3,"left");
-        if (e4 != null) {
-          var n3 = findLinkedCenter(e4);
-          if (e2.type == "right" && n3.type == trans.right) return trans;
-        }
-      } else if (trans.action == "remove1") {
-        return trans;
-      } else {
-        if (e2.type == "right") return trans;
-      }
-      return null;
-    } else if (trans.right == n1.type && trans.action == "arrow") {
-      // Arrow is always good
-      return trans;
-    }
+    let trans = transformList[i];
+    if (n1.type == trans.in[0][0] && checkTransform(n1, trans)) return trans;
   }
   
   return null;
 }
 
+// TODO deal with self-linked nodes
 function doTransform(n1, trans) {
-  function moveLink1(s1,d2i) {
-    // Connect the other side of s1 to d2
-    var s2 = findLinkedHalfEdge(s1);
-    var d2 = findNode(d2i);
-    if (s2 != null) {
-      removeLink(s1.id,s2.id);
-      removeLink(s2.id,s1.id);
-      addLink(s2.id,d2i,2);
+  // Link src and dest, deleting other links
+  function moveLink(src, dest) {
+    if (src) {
+      let srcOther = findLinkedHalfEdge(src);
+      if (srcOther) {
+        removeLink(src.id, srcOther.id);
+        removeLink(srcOther.id, src.id);
+      }
     }
-  }
-  function moveLink2(s1,d1) {
-    // Connect the other side of two half-edges to each other
-    var s2 = findLinkedHalfEdge(s1);
-    var d2 = findLinkedHalfEdge(d1);
-    if (s2 != null) {
-      removeLink(s1.id,s2.id);
-      removeLink(s2.id,s1.id);
+    if (dest) {
+      let destOther = findLinkedHalfEdge(dest);
+      if (destOther) {
+        removeLink(dest.id, destOther.id);
+        removeLink(destOther.id, dest.id);
+      }
     }
-    if (d2 != null) {
-      removeLink(d1.id,d2.id);
-      removeLink(d2.id,d1.id);
-    }
-    if (s2 != null && d2 != null && s2 != d1)
-      addLink(s2.id,d2.id,2);
+    
+    if (src && dest) addLink(src.id, dest.id, 2);
   }
   
-  var e1 = findLinkedOfType(n1,"left");
-  var e2 = findLinkedHalfEdge(e1);
-  var n2, a, b, b1, c, d;
-  if (e2 != null) {
-    n2 = findLinkedCenter(e2);
-
-    a  = findLinkedOfType(n2,"left")
-    b  = findLinkedOfType(n2,"out")
-    b1 = findLinkedOfType(n2,"right")
+  let transMatch = checkTransform(n1, trans);
+  
+  if (transMatch == null) {
+    console.error("Couldn't match transform");
+    return;
   }
-  c  = findLinkedOfType(n1,"out")
-  d  = findLinkedOfType(n1,"right")
+  
+  // Add nodes
+  if (trans.add) {
+    for (let template of trans.add) {
+      let base = transMatch.nodes[template[1]];
+      nodeIndices = addNodeAndEdges(template[0], base.x, base.y);
+      for (let i=0; i<nodeIndices.length-1; i++) {
+        let src = findNode(nodeIndices[i+1]);
+        let dest = transMatch.edges[-template[i+2]];
+        
+        if (!dest) {
+          if (transMatch.edges[template[i+2]]) {
+            dest = findLinkedHalfEdge(transMatch.edges[template[i+2]])
+          } else {
+            // Make an edge if none exists
+            transMatch.edges[template[i+2]] = src;
+          }
+        }
+        
+        if (dest)
+          moveLink(findNode(nodeIndices[i+1]), dest);
+      }
+    }
+  }
+  
+  // Move links
+  if (trans.link) {
+    for (let template of trans.link) {
+      let src = transMatch.edges[template[0]];
+      let dest = transMatch.edges[template[1]];
+      
+      // Follow links if other side is not part of input
+      // This is so that self-linked nodes behave properly
+      if (!src) src = findLinkedHalfEdge(transMatch.edges[-template[0]]);
+      if (!dest) dest = findLinkedHalfEdge(transMatch.edges[-template[1]]);
+      
+      moveLink(src, dest);
+    }
+  }
+  
+  // Remove nodes
+  if (trans.remove === true) {
+    for (let i=0; i<trans.in.length; i++) {
+      if (trans.in[i][0] !== null)
+        removeNodeAndEdges(transMatch.nodes[i]);
+    }
+  } else if (trans.remove) {
+    for (let index of trans.remove) {
+      removeNodeAndEdges(transMatch.nodes[index]);
+    }
+  }
+}
 
-  switch (trans.action) {
-    case "arrow":
-      // Remove those arrows
-      moveLink2(e1,d);
-      removeNodeAndEdges(n1);
-      break;
-    case "remove":
-      // L-A and FI-FOE transitions:
-      // Link left to right and out to out
-      moveLink2(a,d);
-      moveLink2(b,c);
+function checkTransform(n1, trans) {
+  let nodeList = {0:n1};
+  let edgeList = {};
+  
+  //Find involved nodes and edges
+  
+  let toSearch = [0];
+  let foundCount = 0;
+  
+  // Find the index in trans.in with the associated numbered half-edge,
+  // add connection to nodeList
+  // Returns false if a conflict was encountered (incorrect ports)
+  function addEdge(eindex, edge) {
+    if (edgeList[eindex]) {
+      // This edge is already explored; return whether it matches previously explored edge
+      return (edge == edgeList[eindex]);
+    }
+    edgeList[eindex] = edge;
+    
+    let other = findLinkedHalfEdge(edge);
+    let otherNode;
+    if (other) {
+      otherNode = findLinkedCenter(other);
+    }
+    
+    let index = trans.in.findIndex(n => (n.findIndex((e,i) => i>0 && e==-eindex) > -1))
+    if (index > -1) {
+      let port = trans.in[index].findIndex((e,i) => i>0 && e==-eindex)
       
-      removeNodeAndEdges(n1);
-      removeNodeAndEdges(n2);
-      break;
-    case "remove1":
-      // Just remove an unconnected T
-      removeNodeAndEdges(n1);
-      break;
-    case "term":
-      // Terminator transition for A and FI
-      // Make another terminator
-      na = addNodeAndEdges("T",n2.x,n2.y);
-      
-      moveLink1(a,e1.id)
-      moveLink1(b,na[1])
-      
-      removeNodeAndEdges(n2);
-      break;
-    case "term1": case "term2":
-      // Terminator transition for FO and FOE
-      // Remove the node and terminator
-      if (e2.type == "right") {
-        moveLink2(a,b)
-      } else {
-        moveLink2(a,b1)
+      if (nodeList[index] === undefined) {
+        toSearch.push(index);
       }
       
-      removeNodeAndEdges(n1);
-      removeNodeAndEdges(n2);
-      break;
-    case "termsplit":
-      // Terminator transition for L
-      // Terminate left and leave out alone
-      moveLink1(a,e1.id)
-      
-      removeNodeAndEdges(n2);
-      break;
-    case "dist1": case "dist2": case "dist3":
-      // dist1: Distributive transitions for 2 input nodes,
-      // dist2: Distributive transitions for 2 output nodes,
-      // dist3: Distributive transitions for 2 output nodes
-      //          ensuring both outputs of left node are same
-      
-      var na = addNodeAndEdges(trans.t1,n2.x,n2.y);
-      var nb = addNodeAndEdges(trans.t2,n2.x,n2.y);
-      var nc = addNodeAndEdges(trans.t3,n1.x,n1.y);
-      var nd = addNodeAndEdges(trans.t4,n1.x,n1.y);
-      
-      // Interior and exterior ports for nb
-      // depend on whether right node is 2 input or 2 output
-      var nbint, nbext
-      
-      if (trans.action == "dist1") {
-        nbint = nb[3]; nbext = nb[1];
+      if (otherNode) {
+        nodeList[index] = otherNode;
+        edgeList[-eindex] = other;
       } else {
-        nbint = nb[1]; nbext = nb[3];
+        nodeList[index] = null;
       }
-      
-      addLink(na[2],nc[1],2);
-      addLink(na[3],nd[1],2);
-      addLink(nb[2],nc[2],2);
-      addLink(nbint,nd[2],2);
-
-      moveLink1(a,na[1]);
-      moveLink1(b,nbext);
-      moveLink1(c,nc[3]);
-      moveLink1(d,nd[3]);
-      removeNodeAndEdges(n1);
-      removeNodeAndEdges(n2);
-      break;
-    default:
-      console.error("Invalid transformation "+trans.action)
+    }
+    
+    return true;
   }
-
-  findAllTransforms();
-  //update();
+  
+  while (toSearch.length > 0) {
+    foundCount++;
+    let index = toSearch.pop();
+    let node = nodeList[index];
+    let template = trans.in[index];
+    
+    if (node === null) {
+      if (template[0] !== null) return;
+      continue;
+    }
+    
+    if (node.type !== template[0]) return;
+    
+    let e1 = findLinkedOfType(node,"left");
+    let e2 = findLinkedOfType(node,"out");
+    let e3 = findLinkedOfType(node,"right");
+    
+    if (!e1 && !e2 && e3) {
+      // One edge
+      addEdge(template[1], e3);
+    } else if (e1 && !e2 && !e3) {
+      // One edge
+      if (!addEdge(template[1], e1)) return;
+    } else if (e1 && !e2 && e3) {
+      // Two edges
+      if (!addEdge(template[1], e1)) return;
+      if (!addEdge(template[2], e3)) return;
+    } else {
+      // Three edges
+      if (!addEdge(template[1], e1)) return;
+      if (!addEdge(template[2], e2)) return;
+      if (!addEdge(template[3], e3)) return;
+    }
+  }
+  
+  if (foundCount != trans.in.length) return;
+  
+  return {nodes: nodeList, edges: edgeList};
 }
 
 function findAllTransforms() {
