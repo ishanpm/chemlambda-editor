@@ -21,8 +21,6 @@ var nodeValence = {
 }
 
 /**
- * NEW TRANSFORM SYNTAX
- * 
  * {in:[[type, edge...]...], add:[[type, base, edge...]...], remove:([index...]|true), link:[[edge1,edge2]...]}
  * 
  * Half-edges are a positive or negative number. For example, 1 connects to -1.
@@ -403,7 +401,6 @@ function findTransform(n1) {
   return null;
 }
 
-// TODO deal with self-linked nodes
 function doTransform(n1, trans) {
   // Link src and dest, deleting other links
   function moveLink(src, dest) {
@@ -724,7 +721,7 @@ function nodeHover(d,i) {
 }
 
 function importMol(str) {
-  var lines = str.split("\n");
+  var lines = str.split(/[\n^]/);
   var edges = {};
 
   for (var i=0; i<lines.length; i++) {
