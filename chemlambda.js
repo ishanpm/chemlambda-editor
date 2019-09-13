@@ -177,7 +177,7 @@ function myGraph(selector) {
     .attr("height", h)
     .attr("id", "svg")
     .attr("pointer-events", "all")
-    .attr("viewBox", "0 0 " + w + " " + h)
+    .attr("viewBox", (-w/2) + " " + (-h/2) + " " + w + " " + h)
     .attr("perserveAspectRatio", "xMinYMid")
     .on("click",backClick)
   
@@ -288,8 +288,8 @@ function myGraph(selector) {
       .alpha(.1)
       .alphaDecay(0)
       .force("charge_force", d3.forceManyBody().strength(-50))
-      .force("center_x", d3.forceX(w / 2).strength(.05))
-      .force("center_y", d3.forceY(h / 2).strength(.05))
+      .force("center_x", d3.forceX(0).strength(.05))
+      .force("center_y", d3.forceY(0).strength(.05))
       .force("links", d3.forceLink(links).id(function (d) { return d.id; }).distance(function(d) {
         if (d.value == 1) {
           return 20;
@@ -344,6 +344,17 @@ function myGraph(selector) {
 
 graph = myGraph("#svgdiv")
 
+$(window).resize(function(e) {
+  console.log("hi")
+  
+  let w = $(window).width();
+  let h = $(window).height();
+  
+  var svg = $("#svgdiv svg")
+    .attr("width", w)
+    .attr("height", h)
+    .attr("viewBox", (-w/2) + " " + (-h/2) + " " + w + " " + h)
+})
 function setMode(newMode, newType) {
   mode = newMode;
   addType = newType;
