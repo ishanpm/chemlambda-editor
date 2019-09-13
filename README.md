@@ -5,4 +5,4 @@ Chemlambda is a graph rewriting system based on lambda calculus. This implementa
 
 See it in action at: https://ishanpm.github.io/chemlambda-editor/
 
-See https://github.com/chorasimilarity/chemlambda-gui for more info.
+See [the original repository](https://github.com/chorasimilarity/chemlambda-gui/blob/gh-pages/dynamic/README.md) for more info.

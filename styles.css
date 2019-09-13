@@ -1,0 +1,47 @@
+span {
+    color: white; 
+}
+
+.link {
+    stroke: white;
+    stroke-width: 2px;
+}
+
+.node {
+}
+
+.textClass {
+    stroke: #323232;
+    fill: white;
+    font-family: "Lucida Grande", "Droid Sans", Arial, Helvetica, sans-serif;
+    font-weight: normal;
+    stroke-width: .5;
+    font-size: 14px;
+}
+
+body {
+    background-color: black;
+    padding: 0px;
+    height: 100vh;
+    margin: 0px;
+}
+
+#svgdiv .svg {
+    border: 2px solid #888
+}
+
+.player-frame {
+    position: relative;
+    overflow: hidden;
+    height: 100%;
+}
+
+.toolbar {
+    position: absolute;
+    background: black;
+    margin: 8px;
+}
+
+.toolbar-bottom {
+    bottom: 0px;
+}
