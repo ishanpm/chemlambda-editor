@@ -164,8 +164,8 @@ function myGraph(selector) {
   }
 
   // set up the D3 visualisation in the specified element
-  var w = 960,
-      h = 800;
+  var w = $(window).width(),
+      h = $(window).height();
 
   var color = d3.scaleOrdinal()
   .domain(["left","right","out","L","A","FI","FOE","FO","T","FRIN","FROUT","Arrow"])
