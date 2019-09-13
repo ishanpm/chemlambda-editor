@@ -273,31 +273,7 @@ function myGraph(selector) {
       d.fy = null;
     }
     
-    // Keep node objects on top of edges
-    $(".nodeStrokeClass").each(function( index ) {
-      var gnode = this.parentNode;
-      gnode.parentNode.appendChild(gnode);
-    });
-    
-    d3.zoom().on("zoom", function zoom_actions(){
-      vis.attr("transform", d3.event.transform)
-    })(svg)
-    // Restart the force layout.
-    
-    force
-      .alpha(.1)
-      .alphaDecay(0)
-      .force("charge_force", d3.forceManyBody().strength(-50))
-      .force("center_x", d3.forceX(0).strength(.05))
-      .force("center_y", d3.forceY(0).strength(.05))
-      .force("links", d3.forceLink(links).id(function (d) { return d.id; }).distance(function(d) {
-        if (d.value == 1) {
-          return 20;
-        } else {
-          return 10;
-        }
-      }).strength(5))
-      .on("tick", function () {
+    function updateNodePos() {
 
       node.attr("transform", function (d) {
         return "translate(" + d.x + "," + d.y + ")";
@@ -315,7 +291,35 @@ function myGraph(selector) {
         .attr("y2", function (d) {
         return d.target.y;
       });
-    })
+    }
+    
+    updateNodePos();
+    
+    // Keep node objects on top of edges
+    $(".nodeStrokeClass").each(function( index ) {
+      var gnode = this.parentNode;
+      gnode.parentNode.appendChild(gnode);
+    });
+    
+    d3.zoom().on("zoom", function zoom_actions(){
+      vis.attr("transform", d3.event.transform)
+    })(svg)
+    
+    // Restart the force layout.
+    force
+      .alpha(.1)
+      .alphaDecay(0)
+      .force("charge_force", d3.forceManyBody().strength(-50))
+      .force("center_x", d3.forceX(0).strength(.05))
+      .force("center_y", d3.forceY(0).strength(.05))
+      .force("links", d3.forceLink(links).id(function (d) { return d.id; }).distance(function(d) {
+        if (d.value == 1) {
+          return 20;
+        } else {
+          return 10;
+        }
+      }).strength(5))
+      .on("tick", updateNodePos)
     .restart();
 
     
@@ -345,8 +349,6 @@ function myGraph(selector) {
 graph = myGraph("#svgdiv")
 
 $(window).resize(function(e) {
-  console.log("hi")
-  
   let w = $(window).width();
   let h = $(window).height();
   
