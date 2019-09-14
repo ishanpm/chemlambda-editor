@@ -4,7 +4,7 @@ var addType = 0;
 var selection = null;
 var speed = 0;
 var newNodeIndex = 0;
-var autoFilter = ['L','A','FI','FO','FOE','T','Arrow'];
+var autoFilter = ['L','A','FI','FO','FOE','T','Arrow','S','K','I','U','Z','Lock','Key','Bypass','Open'];
 //var centerList = []; // List of 'center' nodes (not half-edges)
 var transformCache = []; // Nodes ready for transformation
 
@@ -18,6 +18,15 @@ var nodeValence = {
   'FRIN':[1],
   'FROUT':[0],
   'Arrow':[0,1],
+  'S':[1],
+  'K':[1],
+  'I':[1],
+  'U':[1],
+  'Z':[1],
+  'Lock':[0,1],
+  'Key':[0,1],
+  'Bypass':[0,1],
+  'Open':[0,1],
 }
 
 /**
@@ -52,10 +61,11 @@ var transformListOrig = [
   {name:'FOE1-T',in:[['T',-3],['FOE',-1,2,3]],remove:true,link:[[1,-2]]},
   {name:'FOE2-T',in:[['T',-2],['FOE',-1,2,3]],remove:true,link:[[1,-3]]},
   {name:'Clean', in:[['T',-1],[null,1]],remove:true},
-  {name:'Comb',  in:[['Arrow',-1,2]],remove:true,link:[1,-2]}
+  {name:'Comb',  in:[['Arrow',-1,2]],remove:true,link:[1,-2]},
 ]
 
-var transformListAlt = [
+/*
+var transformListAlt2 = [
   {name:'L-A',   in:[['A',-3,-4,5],['L',-1,2,3]],remove:true,link:[[1,-5],[-2,4]]},
   {name:'FI-FOE',in:[['FOE',-3,4,5],['FI',-1,-2,3]],remove:true,link:[[1,-5],[2,-4]]},
   {name:'L-FO',  in:[['FO',-3,4,5],['L',-1,2,3]],add:[['FOE',1,-1,7,6],['FI',1,-8,-9,2],['L',0,-7,9,4],['L',0,-6,8,5]],remove:true},
@@ -71,8 +81,71 @@ var transformListAlt = [
   {name:'FO2-T', in:[['T',-2],['FO',-1,2,3]],remove:true,link:[[1,-3]]},
   {name:'FOE-T', in:[['T',-3],['FOE',-1,2,3],['T',-2]],remove:[1,2],link:[[1,-3]]}, // FOE-T requires connecting to two T
   {name:'Clean', in:[['T',-1],[null,1]],remove:true},
-  {name:'Comb',  in:[['Arrow',-1,2]],remove:true,link:[1,-2]}
-] 
+  {name:'Comb',  in:[['Arrow',-1,2]],remove:true,link:[1,-2]},
+]
+*/
+
+var transformListAlt = [
+  {name:'L-A',   in:[['A',-3,-4,5],['L',-1,2,3]],add:[['Key',0,-1,5],['Lock',1,-4,2]],remove:true,delay:1},
+  {name:'FI-FOE',in:[['FOE',-3,4,5],['FI',-1,-2,3]],remove:true,link:[[1,-5],[2,-4]]},
+  {name:'L-FO',  in:[['FO',-3,4,5],['L',-1,2,3]],add:[['FOE',1,-1,7,6],['FI',1,-8,-9,2],['L',0,-7,9,4],['L',0,-6,8,5]],remove:true},
+  {name:'A-FO',  in:[['FO',-3,4,5],['A',-1,-2,3]],add:[['FO',1,-1,7,6],['FO',1,-2,9,8],['A',0,-7,-9,4],['A',0,-6,-8,5]],remove:true},
+  {name:'FI-FO', in:[['FO',-3,4,5],['FI',-1,-2,3]],add:[['FO',1,-1,7,6],['FO',1,-2,9,8],['FI',0,-7,-9,4],['FI',0,-6,-8,5]],remove:true},
+  {name:'L-FOE', in:[['FOE',-3,4,5],['L',-1,2,3]],add:[['Bypass',1,-1,10],['FOE',1,-10,7,6],['FI',1,-8,-9,2],['L',0,-7,9,4],['L',0,-6,8,5]],remove:true},
+  {name:'A-FOE', in:[['FOE',-3,4,5],['A',-1,-2,3]],add:[['FOE',1,-1,7,6],['FOE',1,-2,9,8],['A',0,-7,-9,4],['A',0,-6,-8,5]],remove:true},
+  {name:'FO-FOE',in:[['FOE',-3,4,5],['FO',-1,2,3]],add:[['FOE',1,-1,7,6],['FI',1,-8,-9,2],['FO',0,-7,9,4],['FO',0,-6,8,5]],remove:true},
+  {name:'L-T',   in:[['T',-3],['L',-1,2,3]],remove:[1],link:[[1,-3]]},
+  {name:'A-T',   in:[['T',-3],['A',-1,-2,3]],add:[['T',1,-2]],remove:[1],link:[[1,-3]]},
+  {name:'FI-T',  in:[['T',-3],['FI',-1,-2,3]],add:[['T',1,-2]],remove:[1],link:[[1,-3]]},
+  {name:'FO1-T', in:[['T',-3],['FO',-1,2,3]],remove:true,link:[[1,-2]]},
+  {name:'FO2-T', in:[['T',-2],['FO',-1,2,3]],remove:true,link:[[1,-3]]},
+  {name:'FOE-T', in:[['T',-3],['FOE',-1,2,3],['T',-2]],remove:[1,2],link:[[1,-3]]}, // FOE-T requires connecting to two T
+  {name:'Clean', in:[['T',-1],[null,1]],remove:true},
+  {name:'Comb',  in:[['Arrow',-1,2]],remove:true,link:[1,-2]},
+  
+  // Lock & Key rules
+  
+  {name:'Lo-By', in:[['Bypass',-2,3],['Lock',-1,2]],add:[['Open',0,-1,3]],remove:true},
+  {name:'Lo-Ke', in:[['Key',-2,3],['Lock',-1,2]],remove:true,link:[[1,-3]]},
+  {name:'Lo-FOE',in:[['FOE',-2,3,4],['Lock',-1,2]],add:[['FO',0,-1,5,6],['Lock',0,-5,3],['Lock',0,-6,4]],remove:true},
+  {name:'Op-By', in:[['Bypass',-2,3],['Open',-1,2]],add:[['Bypass',0,-1,4],['Open',0,-4,3]],remove:true},
+  {name:'Op-FOE',in:[['FOE',-2,3,4],['Open',-1,2]],add:[['FOE',0,-1,5,6],['Lock',0,-5,3],['Lock',0,-6,4]],remove:true},
+  
+  {name:'FI-By', in:[['Bypass',-3,4],['FI',-1,-2,3]],remove:[0],link:[[3,-4]]},
+  {name:'FO-By', in:[['Bypass',-3,4],['FO',-1,2,3]],add:[['Bypass',1,-5,6]],remove:[0],link:[[1,-5],[6,-1],[3,-4]]},
+  {name:'L-By',  in:[['Bypass',-3,4],['L',-1,2,3]],add:[['Bypass',1,-5,6]],remove:[0],link:[[1,-5],[6,-1],[3,-4]]},
+  {name:'L2-By', in:[['Bypass',-2,4],['L',-1,2,3]],remove:[0],link:[[2,-4]]}, // Backwards compatibility with unguarded statements
+  {name:'A-By',  in:[['Bypass',-3,4],['A',-1,-2,3]],add:[['Bypass',1,-5,6],['Bypass',1,-7,8]],remove:[0],link:[[1,-5],[6,-1],[2,-7],[8,-2],[3,-4]]},
+  {name:'FI-Ke', in:[['Key',-3,4],['FI',-1,-2,3]],remove:[0],link:[[3,-4]]},
+  {name:'FO-Ke', in:[['Key',-3,4],['FO',-1,2,3]],add:[['Key',1,-5,6]],remove:[0],link:[[1,-5],[6,-1],[3,-4]]},
+  {name:'FO2-Ke',in:[['Key',-2,4],['FO',-1,2,3]],remove:[0],link:[[2,-4]]},
+  {name:'L-Ke',  in:[['Key',-3,4],['L',-1,2,3]],add:[['Key',1,-5,6]],remove:[0],link:[[1,-5],[6,-1],[3,-4]]},
+  {name:'L2-Ke', in:[['Key',-2,4],['L',-1,2,3]],remove:[0],link:[[2,-4]]}, // Backwards compatibility with unguarded statements
+  {name:'A-Le',  in:[['Key',-3,4],['A',-1,-2,3]],add:[['Key',1,-5,6],['Key',1,-7,8]],remove:[0],link:[[1,-5],[6,-1],[2,-7],[8,-2],[3,-4]]},
+  
+  {name:'Lo-T',  in:[['T',-2],['Lock',-1,2]],remove:[1],link:[[1,-2]]}, // other -T rules can be included, but are not necessary for lambda calculus
+  
+  // SKI combinator rules
+  
+  {name:'S-A',  in:[['S',1],['A',-1,-2,3],['A',-3,-4,5],['A',-5,-6,7]],add:[['FO',3,-6,8,9],['A',1,-2,-8,10],['A',2,-4,-9,11],['A',2,-10,-11,7]],remove:true},
+  {name:'K-A',  in:[['K',1],['A',-1,-2,3],['A',-3,-4,5]],add:[['T',2,-4]],remove:true,link:[[2,-5]]},
+  {name:'I-A',  in:[['I',1],['A',-1,-2,3]],remove:true,link:[[2,-3]]},
+  {name:'S-T',  in:[['T',-1],['S',1]],remove:true},
+  {name:'K-T',  in:[['T',-1],['K',1]],remove:true},
+  {name:'I-T',  in:[['T',-1],['I',1]],remove:true},
+  {name:'S-FO', in:[['FO',-1,2,3],['S',1]],add:[['S',0,2]],remove:[0],link:[[1,-3]]},
+  {name:'K-FO', in:[['FO',-1,2,3],['K',1]],add:[['K',0,2]],remove:[0],link:[[1,-3]]},
+  {name:'I-FO', in:[['FO',-1,2,3],['I',1]],add:[['I',0,2]],remove:[0],link:[[1,-3]]},
+  {name:'S-FOE',in:[['FOE',-1,2,3],['S',1]],add:[['S',0,2]],remove:[0],link:[[1,-3]]},
+  {name:'K-FOE',in:[['FOE',-1,2,3],['K',1]],add:[['K',0,2]],remove:[0],link:[[1,-3]]},
+  {name:'I-FOE',in:[['FOE',-1,2,3],['I',1]],add:[['I',0,2]],remove:[0],link:[[1,-3]]},
+  {name:'U-T',  in:[['T',-1],['U',1]],remove:true},
+  {name:'Z-T',  in:[['T',-1],['Z',1]],remove:true},
+  {name:'U-FO', in:[['FO',-1,2,3],['U',1]],add:[['U',0,2]],remove:[0],link:[[1,-3]]},
+  {name:'Z-FO', in:[['FO',-1,2,3],['Z',1]],add:[['Z',0,2]],remove:[0],link:[[1,-3]]},
+  {name:'U-FOE',in:[['FOE',-1,2,3],['I',1]],add:[['U',0,2]],remove:[0],link:[[1,-3]]},
+  {name:'Z-FOE',in:[['FOE',-1,2,3],['I',1]],add:[['Z',0,2]],remove:[0],link:[[1,-3]]},
+]
 
 transformList = transformListOrig;
 
@@ -164,12 +237,12 @@ function myGraph(selector) {
   }
 
   // set up the D3 visualisation in the specified element
-  var w = 960,
-      h = 800;
+  var w = $(window).width(),
+      h = $(window).height();
 
   var color = d3.scaleOrdinal()
-  .domain(["left","right","out","L","A","FI","FOE","FO","T","FRIN","FROUT","Arrow"])
-  .range(["#f00","#00f","#0f0","#f55","#5ff","#ff5","#55f","#5f5","#f5f","#338","#883","#aaa"]);
+  .domain(["left","right","out","L","A","FI","FOE","FO","T","FRIN","FROUT","Arrow",'S','K','I','U','Z','FOX','Lock','Key','Bypass','Open'])
+  .range(["#f00","#00f","#0f0","#f55","#5ff","#ff5","#55f","#5f5","#f5f","#338","#883","#aaa","#633","#363","#336","#ccc","#333","#ccf","#733","#377","#337","#777"]);
 
   var svg = d3.select(selector)
     .append("svg:svg")
@@ -357,6 +430,7 @@ $(window).resize(function(e) {
     .attr("height", h)
     .attr("viewBox", (-w/2) + " " + (-h/2) + " " + w + " " + h)
 })
+
 function setMode(newMode, newType) {
   mode = newMode;
   addType = newType;
@@ -699,7 +773,7 @@ function nodeClick(d,i) {
       }
 
       if (linkCount == 1) {
-        if (selection != null && selection.dir != d.dir) {
+        if (selection != null/* && selection.dir != d.dir*/) {
           addLink(selection.id, d.id, 2);
           update();
           selection = null;
@@ -829,7 +903,7 @@ function loop(dt) {
       doTransform(node, trans);
     }
   } else if (speed > 1) {
-    var transformCacheAlt = transformCache.map(e=>e.node)
+    var transformCacheAlt = transformCache.map(e=>e)
     
     // Shuffle
     for (var i=0; i<transformCacheAlt.length; i++) {
@@ -840,14 +914,26 @@ function loop(dt) {
       transformCacheAlt[k] = tmp;
     }
     
-    for (node of transformCacheAlt) {
+    for (candidate of transformCacheAlt) {
+      let node = candidate.node;
+      
       if (nodes.indexOf(node) == -1) continue;
       
       var trans = findTransform(node);
       
       if (trans != null && autoFilter.indexOf(node.type) != -1) {
-        anyMoves = true;
-        doTransform(node, trans);
+        if (trans.delay) {
+          let time = candidate.time || 0;
+          if (time < trans.delay) {
+            candidate.time = time + 1;
+          } else {
+            anyMoves = true;
+            doTransform(node, trans);
+          }
+        } else {
+          anyMoves = true;
+          doTransform(node, trans);
+        }
       }
     }
   }
